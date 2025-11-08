@@ -57,6 +57,17 @@ def test_handler_invalid_json():
     assert status == 400
     assert "Invalid JSON" in body["error"]
 
+def test_handler_invalid_bom():
+    ctx = DummyCtx()
+    invalid_bom = {"bomFormat": "CycloneDX", "specVersion": "1.7", "version": 1}
+    resp = handler(ctx, make_data(invalid_bom))
+    status, body = parse_response(resp)
+    assert status == 400
+    assert body["valid"] is False
+    assert body["specVersion"] == "1.7"
+    assert "errors" in body
+    assert len(body["errors"]) > 0, "Expected validation errors in response"
+
 def test_handler_missing_body():
     ctx = DummyCtx()
     resp = handler(ctx, io.BytesIO(b""))

@@ -50,18 +50,21 @@ def validate_bom(bom: Dict[str, Any]) -> Tuple[bool, str, list]:
     except FileNotFoundError as e:
         return False, version, [str(e)]
 
-    validator = Draft202012Validator(schema)
+    try:
+        validator = Draft202012Validator(schema)
 
-    errors = []
-    for err in sorted(validator.iter_errors(bom), key=lambda e: e.path):
-        location = "/" + "/".join([str(p) for p in err.path]) if err.path else "/"
-        errors.append({
-            "message": err.message,
-            "path": location,
-            "validator": err.validator,
-        })
+        errors = []
+        for err in sorted(validator.iter_errors(bom), key=lambda e: e.path):
+            location = "/" + "/".join([str(p) for p in err.path]) if err.path else "/"
+            errors.append({
+                "message": err.message,
+                "path": location,
+                "validator": err.validator,
+            })
 
-    return (len(errors) == 0), version, errors
+        return (len(errors) == 0), version, errors
+    except Exception as e:
+        return False, version, [f"Validation error: {str(e)}"]
 
 
 def handler(ctx, data: io.BytesIO):
@@ -88,31 +91,38 @@ def handler(ctx, data: io.BytesIO):
                 response_data=json.dumps({"error": "Expected SBOM JSON object"})
             )
 
+        ok, version, errors = validate_bom(bom)
+
+        if ok:
+            return response.Response(
+                ctx,
+                status_code=200,
+                response_data=json.dumps({
+                    "valid": True,
+                    "specVersion": version,
+                })
+            )
+        else:
+            return response.Response(
+                ctx,
+                status_code=400,
+                response_data=json.dumps({
+                    "valid": False,
+                    "specVersion": version or None,
+                    "errors": errors[:50]
+                })
+            )
+
     except json.JSONDecodeError as e:
         return response.Response(
             ctx,
             status_code=400,
             response_data=json.dumps({"error": f"Invalid JSON: {e}"})
         )
-
-    ok, version, errors = validate_bom(bom)
-
-    if ok:
+    except Exception as e:
+        # last-resort guard to avoid 502
         return response.Response(
             ctx,
-            status_code=200,
-            response_data=json.dumps({
-                "valid": True,
-                "specVersion": version,
-            })
-        )
-    else:
-        return response.Response(
-            ctx,
-            status_code=400,
-            response_data=json.dumps({
-                "valid": False,
-                "specVersion": version or None,
-                "errors": errors[:50]
-            })
+            status_code=500,
+            response_data=json.dumps({"error": f"Internal error: {str(e)}"})
         )
