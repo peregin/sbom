@@ -40,33 +40,127 @@ def detect_version(bom: Dict[str, Any]) -> str:
     return ""
 
 
+from functools import lru_cache
+from jsonschema import Draft202012Validator, ValidationError
+
+@lru_cache(maxsize=4)
+def get_validator(version: str) -> Draft202012Validator:
+    """
+    Load and cache the JSON Schema validator for a given CycloneDX version.
+    Raises FileNotFoundError if schema is missing.
+    """
+    schema = load_schema(version)
+    return Draft202012Validator(schema)
+
+
+def _format_validation_error(err: ValidationError) -> Dict[str, Any]:
+    """
+    Turn a jsonschema.ValidationError into a user-friendly, debuggable dict.
+    """
+    # JSON instance path where it failed
+    instance_path = "/" + "/".join(str(p) for p in err.path) if err.path else "/"
+
+    # JSON Schema path (which rule failed)
+    schema_path = "/" + "/".join(str(p) for p in err.schema_path) if err.schema_path else "/"
+
+    # Optional nested context (one level for clarity)
+    contexts = []
+    for ctx in err.context:
+        ctx_path = "/" + "/".join(str(p) for p in ctx.path) if ctx.path else "/"
+        contexts.append({
+            "message": ctx.message,
+            "path": ctx_path,
+            "schema_path": "/" + "/".join(str(p) for p in ctx.schema_path) if ctx.schema_path else "/",
+        })
+
+    return {
+        "message": err.message,
+        "path": instance_path,
+        "schema_path": schema_path,
+        "validator": err.validator,
+        "validator_value": err.validator_value,
+        "context": contexts or None,
+    }
+
+
 def validate_bom(bom: Dict[str, Any]) -> Tuple[bool, str, list]:
+    """
+    Validate a CycloneDX BOM against the 1.5 / 1.6 schema.
+
+    Returns:
+        (is_valid, detected_version, errors[])
+        - errors[] is a list of structured error dicts on failure.
+    """
     version = detect_version(bom)
+
     if version not in ("1.5", "1.6"):
-        return False, version, [f"Unsupported or missing specVersion; expected 1.5 or 1.6, got '{version or 'none'}'."]
+        return (
+            False,
+            version,
+            [{
+                "message": f"Unsupported or missing specVersion; expected 1.5 or 1.6, got '{version or 'none'}'.",
+                "path": "/specVersion",
+                "schema_path": None,
+                "validator": "specVersion",
+                "validator_value": ["1.5", "1.6"],
+                "context": None
+            }]
+        )
 
     try:
-        schema = load_schema(version)
+        validator = get_validator(version)
     except FileNotFoundError as e:
-        return False, version, [str(e)]
-
-    try:
-        validator = Draft202012Validator(schema)
-
-        errors = []
-        for err in sorted(validator.iter_errors(bom), key=lambda e: e.path):
-            location = "/" + "/".join([str(p) for p in err.path]) if err.path else "/"
-            errors.append({
-                "message": err.message,
-                "path": location,
-                "validator": err.validator,
-            })
-
-        return (len(errors) == 0), version, errors
-    except AttributeError as e:
-        return False, version, [f"Attribute Error: {e.name} on {e.obj}"]
+        return (
+            False,
+            version,
+            [{
+                "message": str(e),
+                "path": "/",
+                "schema_path": None,
+                "validator": None,
+                "validator_value": None,
+                "context": None
+            }]
+        )
     except Exception as e:
-        return False, version, [f"Validation Error: {str(e)} - Type: {type(e).__name__}"]
+        # If the schema itself is broken, make that obvious
+        return (
+            False,
+            version,
+            [{
+                "message": f"Internal schema/validator error: {type(e).__name__}: {str(e)}",
+                "path": "/",
+                "schema_path": None,
+                "validator": None,
+                "validator_value": None,
+                "context": None
+            }]
+        )
+
+    # Collect all validation errors, sorted by path for readability
+    errors: list[Dict[str, Any]] = []
+    try:
+        for err in sorted(validator.iter_errors(bom), key=lambda e: list(e.path)):
+            errors.append(_format_validation_error(err))
+    except Exception as e:
+        # Catch any unexpected issues from jsonschema internals cleanly
+        return (
+            False,
+            version,
+            [{
+                "message": f"Unexpected validation engine error: {type(e).__name__}: {str(e)}",
+                "path": "/",
+                "schema_path": None,
+                "validator": None,
+                "validator_value": None,
+                "context": None
+            }]
+        )
+
+    if not errors:
+        return True, version, []
+
+    return False, version, errors
 
 
 def handler(ctx, data: io.BytesIO):
