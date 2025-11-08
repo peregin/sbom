@@ -33,12 +33,8 @@ def test_validate_sample_files():
         assert isinstance(version, str), f"version should be string for {filename}"
         assert isinstance(errors, list), f"errors should be list for {filename}"
 
-        # If validation passes, ensure no errors are returned
-        if ok:
-            assert len(errors) == 0, f"No errors expected for valid BOM {filename}, but got: {errors}"
-        else:
-            # If validation fails, ensure errors are present and properly formatted
-            assert len(errors) > 0, f"Errors expected for invalid BOM {filename}, but got none"
-            assert all(isinstance(error, str) for error in errors), f"All errors should be strings for {filename}"
+        if not ok:
+            print(f"🔥 {filename}: version {version}, {errors}")
+            assert False, f"Validation failed for {filename}"
 
         print(f"✓ {filename}: version {version}, valid structure")
