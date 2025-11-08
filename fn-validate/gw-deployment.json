@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "path": "/validate",
+      "methods": ["POST"],
+      "backend": {
+        "type": "ORACLE_FUNCTIONS_BACKEND",
+        "functionId": "ocid1.fnfunc.oc1.eu-zurich-1.amaaaaaauhyoo2iazuhjndi42sdmla4koqvm3srdcyuwaknkpl6bdidd6qbq"
+      }
+    }
+  ]
+}
