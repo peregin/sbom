@@ -4,7 +4,6 @@ import os
 from typing import Tuple, Any, Dict
 
 from fdk import response
-from jsonschema import Draft202012Validator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_DIR = os.path.join(BASE_DIR, "schemas")
@@ -41,16 +40,25 @@ def detect_version(bom: Dict[str, Any]) -> str:
 
 
 from functools import lru_cache
-from jsonschema import Draft202012Validator, ValidationError
+from jsonschema import Draft7Validator, Validator, SchemaError, ValidationError
 
 @lru_cache(maxsize=4)
-def get_validator(version: str) -> Draft202012Validator:
+def get_validator(version: str) -> Validator:
     """
     Load and cache the JSON Schema validator for a given CycloneDX version.
     Raises FileNotFoundError if schema is missing.
     """
     schema = load_schema(version)
-    return Draft202012Validator(schema)
+    try:
+        Draft7Validator.check_schema(schema)
+    except SchemaError as e:
+        # This makes it obvious the schema is broken, not the SBOM
+        schema_path = "/" + "/".join(str(p) for p in e.absolute_schema_path) if e.absolute_schema_path else "/"
+        error_details = f"message: {e.message}, schema_path: {schema_path}"
+        if e.validator:
+            error_details += f", validator: {e.validator}"
+        raise RuntimeError(f"Invalid schema for specVersion {version} ({error_details})") from e
+    return Draft7Validator(schema)
 
 
 def _format_validation_error(err: ValidationError) -> Dict[str, Any]:

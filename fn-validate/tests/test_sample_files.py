@@ -12,6 +12,7 @@ def test_validate_sample_files():
     assert len(sample_files) > 0, "No sample files found in samples directory"
 
     for filename in sample_files:
+        print(f"⚙️ testing {filename}")
         filepath = os.path.join(samples_dir, filename)
 
         # Read and parse the JSON file
@@ -36,4 +37,4 @@ def test_validate_sample_files():
         if not ok:
             assert False, f"🔥 Validation failed for {filename} - {errors}"
 
-        print(f"✓ {filename}: version {version}, valid structure")
+        print(f"✅ {filename}: version {version}, valid structure")
