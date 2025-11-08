@@ -134,6 +134,11 @@ curl -X POST \
     }
   }' \
   "https://lpicdvhygualtp6ab62aw2t6de.apigateway.eu-zurich-1.oci.customer-oci.com/sbom/validate"
+  
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  --data-binary @"../samples/telemetry.cdx.json" \
+  https://lpicdvhygualtp6ab62aw2t6de.apigateway.eu-zurich-1.oci.customer-oci.com/sbom/validate | jq .
 ```
 
 ## Debugging
