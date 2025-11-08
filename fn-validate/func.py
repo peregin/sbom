@@ -4,7 +4,7 @@ import os
 from typing import Tuple, Any, Dict
 
 from fdk import response
-from jsonschema import Draft202012Validator, ValidationError
+from jsonschema import Draft202012Validator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_DIR = os.path.join(BASE_DIR, "schemas")
@@ -63,8 +63,10 @@ def validate_bom(bom: Dict[str, Any]) -> Tuple[bool, str, list]:
             })
 
         return (len(errors) == 0), version, errors
+    except AttributeError as e:
+        return False, version, [f"Attribute Error: {e.name} on {e.obj}"]
     except Exception as e:
-        return False, version, [f"Validation error: {str(e)} - Type: {type(e).__name__}"]
+        return False, version, [f"Validation Error: {str(e)} - Type: {type(e).__name__}"]
 
 
 def handler(ctx, data: io.BytesIO):

@@ -34,7 +34,6 @@ def test_validate_sample_files():
         assert isinstance(errors, list), f"errors should be list for {filename}"
 
         if not ok:
-            print(f"🔥 {filename}: version {version}, {errors}")
-            assert False, f"Validation failed for {filename}"
+            assert False, f"🔥 Validation failed for {filename} - {errors}"
 
         print(f"✓ {filename}: version {version}, valid structure")
