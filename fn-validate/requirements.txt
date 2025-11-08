@@ -1,2 +1,2 @@
-fdk>=0.1.54
-jsonschema>=4.0.0
+fdk>=0.1.75
+jsonschema>=4.23.0

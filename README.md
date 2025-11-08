@@ -41,4 +41,38 @@ fn update context registry eu-zurich-1.ocir.io/zrtsrfizmrok/functions
 fn create app sbom-app --annotation oracle.com/oci/subnetIds='["ocid1.subnet.oc1.eu-zurich-1.aaaaaaaagakviiodxfjrqpbp7h5cgl4ychpzouxfcn2lqfzytpfsmrb6joha"]'
 fn -v deploy --app sbom-app
 fn list apps
+fn list functions sbom-app
+```
+
+## Testing
+```shell
+# valid file
+fn invoke sbom-app sbom-validate << 'EOF'
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "tools": [
+      { "name": "sbom-validator-test" }
+    ]
+  }
+}
+EOF
+
+# invalid file
+fn invoke sbom-app sbom-validate << 'EOF'
+{
+  "bomFormat": "CycloneDX",
+  "version": 1
+}
+EOF
+
+```
+
+## Debugging
+```shell
+fn inspect context
+fn inspect app sbom-app
 ```
