@@ -1,4 +1,4 @@
-FROM ghcr.io/fnproject/python:3.11-dev as build-stage
+FROM fnproject/python:3.11-dev AS build-stage
 
 WORKDIR /function
 
@@ -8,7 +8,7 @@ RUN pip install --target /python/ --no-cache-dir -r requirements.txt
 COPY func.py func.yaml ./
 COPY schemas ./schemas
 
-FROM ghcr.io/fnproject/python:3.11
+FROM fnproject/python:3.11
 WORKDIR /function
 
 COPY --from=build-stage /python /python
