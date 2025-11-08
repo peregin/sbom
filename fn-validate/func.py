@@ -64,7 +64,7 @@ def validate_bom(bom: Dict[str, Any]) -> Tuple[bool, str, list]:
 
         return (len(errors) == 0), version, errors
     except Exception as e:
-        return False, version, [f"Validation error: {str(e)}"]
+        return False, version, [f"Validation error: {str(e)} - Type: {type(e).__name__}"]
 
 
 def handler(ctx, data: io.BytesIO):
