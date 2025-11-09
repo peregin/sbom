@@ -1,0 +1,9 @@
+schema_version: 20180708
+name: sbom-validate-java
+version: 0.0.15
+runtime: java
+build_image: fnproject/fn-java-fdk-build:jdk11-1.0.143
+run_image: fnproject/fn-java-fdk:jre11-1.0.143
+cmd: com.example.fnvalidate.Function::handleRequest
+memory: 256
+timeout: 45
