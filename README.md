@@ -73,7 +73,7 @@ oci api-gateway deployment create \
   --compartment-id ocid1.compartment.oc1..aaaaaaaav4hpjodtlpnk5xkijdownucejdi7pdebnanndzzmwd6cgyev5foq \
   --display-name sbom-validate-java-deployment \
   --gateway-id ocid1.apigateway.oc1.eu-zurich-1.amaaaaaauhyoo2iardlj4oicdvjhsbsoikji3ugx7gqsbm4nmrvuzdwxffga \
-  --path-prefix "/sbom/v2" \
+  --path-prefix "/v2/sbom" \
   --specification file://gw-deployment.json \
   --region eu-zurich-1
   
@@ -150,10 +150,16 @@ curl -s -X POST \
   --data-binary @"../samples/test_small.json" \
   https://lpicdvhygualtp6ab62aw2t6de.apigateway.eu-zurich-1.oci.customer-oci.com/sbom/validate | jq .
   
+# python
 curl -s -X POST \
   -H "Content-Type: application/json" \
   --data-binary @"../samples/telemetry.cdx.json" \
   https://lpicdvhygualtp6ab62aw2t6de.apigateway.eu-zurich-1.oci.customer-oci.com/sbom/validate | jq .
+# java
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  --data-binary @"../samples/telemetry.cdx.json" \
+  https://lpicdvhygualtp6ab62aw2t6de.apigateway.eu-zurich-1.oci.customer-oci.com/v2/sbom/validate | jq .
 ```
 
 ## Debugging
