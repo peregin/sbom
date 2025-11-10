@@ -60,11 +60,20 @@ oci api-gateway gateway list \
   --region eu-zurich-1
   
 # w-deployment.json contains the function OCID!!!
+# python
 oci api-gateway deployment create \
   --compartment-id ocid1.compartment.oc1..aaaaaaaav4hpjodtlpnk5xkijdownucejdi7pdebnanndzzmwd6cgyev5foq \
   --display-name sbom-validate-deployment \
   --gateway-id ocid1.apigateway.oc1.eu-zurich-1.amaaaaaauhyoo2iardlj4oicdvjhsbsoikji3ugx7gqsbm4nmrvuzdwxffga \
   --path-prefix "/sbom" \
+  --specification file://gw-deployment.json \
+  --region eu-zurich-1  
+# java
+oci api-gateway deployment create \
+  --compartment-id ocid1.compartment.oc1..aaaaaaaav4hpjodtlpnk5xkijdownucejdi7pdebnanndzzmwd6cgyev5foq \
+  --display-name sbom-validate-java-deployment \
+  --gateway-id ocid1.apigateway.oc1.eu-zurich-1.amaaaaaauhyoo2iardlj4oicdvjhsbsoikji3ugx7gqsbm4nmrvuzdwxffga \
+  --path-prefix "/sbom/v2" \
   --specification file://gw-deployment.json \
   --region eu-zurich-1
   
