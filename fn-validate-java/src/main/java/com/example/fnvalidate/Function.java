@@ -57,7 +57,7 @@ public class Function {
 
         } catch (IOException e) {
             return createErrorResponse(400, "Invalid JSON: " + e.getMessage());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return createErrorResponse(500, "Internal error: " + e.getMessage());
         }
     }
